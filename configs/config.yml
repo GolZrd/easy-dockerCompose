@@ -1,0 +1,6 @@
+db:
+  username: postgres
+  host: db
+  port: 5432
+  database: productdb
+  sslmode: disable

@@ -5,9 +5,12 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
+	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -119,7 +122,15 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	connStr := "user=postgres password=Egolgor23 dbname=productdb sslmode=disable"
+	if err := initConfig(); err != nil {
+		log.Fatalf("error initializing configs: %s", err.Error())
+	}
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf("error loading env variables: %s", err.Error())
+	}
+
+	connStr := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=%s",
+		viper.GetString("db.username"), os.Getenv("DB_PASSWORD"), viper.GetString("db.database"), viper.GetString("db.host"), viper.GetString("db.port"), viper.GetString("db.sslmode"))
 	db, err := gorm.Open(postgres.Open(connStr), &gorm.Config{})
 	if err != nil {
 		panic(err)
@@ -143,4 +154,10 @@ func main() {
 
 	fmt.Println("Server is listening...")
 	log.Fatal(http.ListenAndServe(":8181", router))
+}
+
+func initConfig() error {
+	viper.AddConfigPath("configs")
+	viper.SetConfigName("config")
+	return viper.ReadInConfig()
 }
